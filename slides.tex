@@ -68,6 +68,7 @@
   \item \texttt{squeue} -- display information about running or pending jobs
   \item \texttt{sacct} -- display information about completed jobs
   \item \texttt{srun} -- run command interactively
+  \item \texttt{scancel} -- remove job from queue or kill running job
   \end{itemize}
 
   \+
@@ -218,6 +219,25 @@ Hello, SLURM!
 
   \+ If the same option is given \emph{both} in the script \emph{and}
   on the command line, the command-line wins.
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{Canceling a job}
+
+  Command \texttt{scancel} removes a job from the queue, or kills it
+  immediately if it's already running.
+
+  \+
+  You must give \texttt{scancel} the job ID(s) of the job(s) you
+  want to abort:
+
+\begin{semiverbatim}
+\${\bfseries scancel 502}
+\end{semiverbatim}
+
+  \+
+  \emph{Note:} \texttt{scancel} gives no output or feedback!
 \end{frame}
 
 
