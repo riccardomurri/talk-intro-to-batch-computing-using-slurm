@@ -1,6 +1,7 @@
 #! /bin/sh
 #
 # Run the MATLAB script given as first argument.
+# Example: run_matlab.sh simul.m
 #
 # The '#SBATCH' lines below instruct the SLURM
 # batch-queuing system on how to handle this job.
