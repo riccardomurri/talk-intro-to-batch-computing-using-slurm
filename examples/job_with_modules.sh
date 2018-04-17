@@ -8,6 +8,13 @@ else
     exit 69  # EX_UNAVAILABLE
 fi
 
+# ensure we have access to all the module directories
+# that are enabled in interactive sessions
+module use /opt/spack/share/spack/modules/linux-ubuntu16.04-x86_64
+module use /opt/easybuild/modules/all
+module use /opt/modulefiles
+module use "$HOME/modulefiles"
+
 # load an older version of MATLAB
 module load MATLAB/R2013b
 
