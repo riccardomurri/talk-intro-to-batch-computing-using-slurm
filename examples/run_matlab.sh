@@ -24,4 +24,7 @@ if ! [ -r "$1" ]; then
     exit 1
 fi
 
-exec matlab -nodisplay -nodesktop -r "$@"
+# the following line uses the cluster's default MATLAB; if you want to
+# run a specific version of MATLAB, check out script
+# `job_with_modules.sh` in this repository
+matlab -nodisplay -nodesktop < "$1"

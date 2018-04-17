@@ -18,4 +18,5 @@ module use "$HOME/modulefiles"
 # load an older version of MATLAB
 module load MATLAB/R2013b
 
-exec matlab -nodesktop -nodisplay -r version
+# show that it's really MATLAB 2013b
+matlab -nodesktop -nodisplay -r version

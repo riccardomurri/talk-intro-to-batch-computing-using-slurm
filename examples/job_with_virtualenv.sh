@@ -14,5 +14,5 @@ fi
 # and the actual python interpreter used
 echo 1>&2 "Running in virtualenv '$venv', using python interpreter $(command -v python) ..."
 
-# `exec` must be the very last statement
-exec python my_script.py
+# run Python script
+python my_script.py
