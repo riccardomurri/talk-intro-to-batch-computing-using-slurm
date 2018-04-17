@@ -262,7 +262,7 @@ Hello, SLURM!
 
 
 \begin{frame}[fragile]
-  \frametitle{Changing the default output of squeue}
+  \frametitle{Changing the default output of \texttt{squeue}}
 
   Environmental variable \texttt{SQUEUE\_FORMAT2} sets the columns that
   are displayed in the table produced by command \texttt{squeue}:
@@ -315,7 +315,7 @@ JOBID USER        NAME                STATE       REASON              TIME      
   \+
   For instance, to start a shell on a compute node:
 \begin{semiverbatim}
-\${\bfseries srun --pty bash --login}
+\${\bfseries srun -{}-pty bash -{}-login}
 \end{semiverbatim}
 
   \+ \emph{Note:} The \texttt{srun} command will block until an
@@ -341,6 +341,7 @@ JOBID USER        NAME                STATE       REASON              TIME      
   The generic systems revolve around controlling environmental
   variables (but have a lot of caveats and edge cases).
 \end{frame}
+
 
 \begin{frame}[fragile]
   \frametitle{Solution for Python: virtualenv}
