@@ -2,6 +2,10 @@
 #
 
 # MATLAB job array: run simulations with different parameters
+#
+# In this example we run a simulation with different
+# input parameters for each index of the job array.
+#
 
 # short-hand
 matlab='matlab -nodesktop -nodisplay'
