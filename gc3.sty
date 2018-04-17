@@ -91,7 +91,7 @@
     %firstnumber=1%
   }%
   \lstnewenvironment{python}{\lstset{language=python}}{}%
-  \lstnewenvironment{sh}{\lstset{language=sh}}{}%
+  \lstnewenvironment{sh}{\lstset{language=sh,escapechar=@}}{}%
 
 \usepackage{hyperref}
   % for a summary of hyperref options,see: http://www.andy-roberts.net/writing/latex/pdfs
@@ -167,7 +167,7 @@
 %% for inserting an image as a slide
 %
 % shamelessly taken from: http://tex.stackexchange.com/a/3994/110031
-% 
+%
 \newcommand<>{\fullgraphicsframe}[1]{%
   {
     \usebackgroundtemplate{\includegraphics[width=\paperwidth]{#1}}

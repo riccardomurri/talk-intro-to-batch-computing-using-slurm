@@ -1,0 +1,622 @@
+\documentclass[english,serif,mathserif,usenames,dvipsnames]{beamer}
+\usetheme[informal]{gc3}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{babel}
+
+%% This is optional: it adds a few commands and environment we
+%% regularly use in our slide sets
+\usepackage{gc3}
+
+\begin{document}
+
+%% Optional Argument in [Brackets]: Short Title for Footline
+\title[Intro to SLURM]{Introduction to batch computing using SLURM}
+\author{Riccardo Murri \texttt{<riccardo.murri@uzh.ch>}}
+\date{2018-04-17}
+
+%% Makes the title slide
+\maketitle
+
+\section{General}
+\begin{frame}
+  \frametitle{What is a batch-queueing system?}
+
+  \begin{quote}
+    A batch-queuing system is a way to execute computational jobs
+    \emph{asynchronously}.
+  \end{quote}
+
+  \pause \+
+  You submit a script to be processed to a central
+  resource scheduler, and the scheduler executes the script when
+  enough resources (CPUs, memory, disk space, etc.) are available.
+
+  \pause \+
+  \emph{Note:} This also means that you cannot
+  \emph{interactively} type input to the script! Batch computing is
+  mostly intended for \emph{non-interactive} tasks.
+\end{frame}
+
+\begin{frame}
+  \frametitle{What is SLURM?}
+
+  SLURM is one of many batch-queueing systems available for GNU/Linux
+  clusters.  It is the system available on \texttt{cluster.pelkmanslab.org}.
+
+  \+
+  The SLURM batch-queuing system can distribute job execution across
+  a cluster of independent computing nodes so that many jobs can be
+  executed at the same time.
+
+  \+
+  \begin{references}
+    \url{http://slurm.schedmd.com/}
+  \end{references}
+\end{frame}
+
+
+\part{SLURM commands}
+\begin{frame}
+  \frametitle{How do I interact with SLURM?}
+
+  SLURM provides several commands to control job submission and
+  status:
+  \begin{itemize}
+  \item \texttt{sbatch} -- enqueue a \emph{shell script} for execution
+  \item \texttt{squeue} -- display information about running or pending jobs
+  \item \texttt{sacct} -- display information about completed jobs
+  \item \texttt{srun} -- run command interactively
+  \end{itemize}
+
+  \+
+  All these commands provide a \texttt{man} page full of information.
+  (E.g., run \texttt{man sacct})
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{sbatch}
+
+  You can submit a \emph{shell script} for processing by SLURM using
+  the \texttt{sbatch} command like this:
+
+\begin{sh}
+  sbatch my_script.sh
+\end{sh}
+
+\+
+  {\em Using the \texttt{sbatch} command, by default your job will run on 1
+  CPU and using the entire memory of a compute node (32GB).}
+
+\+
+  Options to \texttt{sbatch} are available to request more CPUs or a
+  different memory slice.
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{Example: run MATLAB command}
+
+  The following script can be used to execute MATLAB commands in a SLURM job:
+  \lstinputlisting{examples/run_matlab_cmd.sh}
+
+  \+
+  You can submit this MATLAB job to SLURM by running:
+
+\begin{sh}
+    # note: it's `hello` not `hello.m`
+    sbatch run_matlab_cmd.sh hello
+\end{sh}
+\end{frame}
+% $
+
+\begin{frame}[fragile]
+  \frametitle{squeue}
+  Once you have submitted a job, you can monitor its status with \texttt{squeue}:
+
+\begin{semiverbatim}\tiny
+\$ squeue
+JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
+  502      main run_matl   rmurri  R       0:03      1 pelkmanslab-slurm-worker-001
+\end{semiverbatim}
+
+  \+
+  \emph{Note:} once the job is finished, it won't be listed by
+  \texttt{squeue} anymore.
+
+\end{frame}
+% $
+
+
+\begin{frame}[fragile]
+  \frametitle{sacct}
+
+  \+
+  You can list already-finished jobs with the \texttt{sacct} command:
+
+\begin{semiverbatim}\tiny
+\$ sacct
+       JobID    JobName  Partition    Account  AllocCPUS      State ExitCode
+------------ ---------- ---------- ---------- ---------- ---------- --------
+502          run_matla+       main       root          1  COMPLETED      0:0
+502.batch         batch                  root          1  COMPLETED      0:0
+\end{semiverbatim}
+
+  \+ \emph{Note:} By default, \texttt{sacct} lists only jobs finished
+  since last midnight (and until now).  Use options
+  \texttt{-{}-starttime} and \texttt{-{}-endtime} to change this
+  window.
+\end{frame}
+% $
+
+
+\begin{frame}[fragile]
+  \frametitle{Where have all the outputs gone?}
+
+  Standard output \emph{and} standard error output of a job are (by
+  default) collected in a file named
+  \texttt{slurm-}$\mathtt{JJJ}$\texttt{.out}:
+
+  \begin{semiverbatim}\tiny
+\$ cat slurm-502.out
+
+                            < M A T L A B (R) >
+                  Copyright 1984-2017 The MathWorks, Inc.
+                   R2017b (9.3.0.713579) 64-bit (glnxa64)
+                             September 14, 2017
+
+
+To get started, type one of these: helpwin, helpdesk, or demo.
+For product information, visit www.mathworks.com.
+
+Hello, SLURM!
+\end{semiverbatim}
+
+\+
+  This can be changed using options \texttt{-o} and \texttt{-e} to \texttt{sbatch}.
+\end{frame}
+% $
+
+
+\begin{frame}[fragile]
+  \frametitle{(Common) Options to \texttt{sbatch}}
+
+  You can specify options to \texttt{sbatch} directly \emph{in the job
+    script}, as special comments introduced by the \texttt{\#SBATCH}
+  prefix:
+
+  \begin{semiverbatim}\footnotesize\ttfamily
+ ## use 1 CPU
+{\bfseries #SBATCH} -c 1
+
+ ## run for (max) 8 hours
+{\bfseries #SBATCH} -{}-time=8:00:00
+
+ ## use (max) 3500 MB of memory per CPU
+{\bfseries #SBATCH} -{}-mem-per-cpu=3500m
+
+ ## write both output and errors to file `run_matlab.NNN.log`
+{\bfseries #SBATCH} -o run_matlab.\%j.log
+{\bfseries #SBATCH} -e run_matlab.\%j.log
+  \end{semiverbatim}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{(Common) Options to \texttt{sbatch}}
+
+  You can also specify options to \texttt{sbatch} on the
+  command line:
+
+  \begin{semiverbatim}
+\$ sbatch -{}-time=8:00:00 \textbackslash
+          -{}-mem-per-cpu=3500m \textbackslash
+          run_matlab_cmd.sh hello
+\end{semiverbatim}
+
+  \+ If the same option is given \emph{both} in the script \emph{and}
+  on the command line, the command-line wins.
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{squeue}
+  You can check the state of (anyone's) jobs with the \texttt{squeue}
+  command:
+
+\begin{sh}
+  # view all jobs
+  squeue
+
+  # view only jobs of \$USER
+  squeue -u $USER
+
+  # view only running jobs (af any user)
+  squeue --state RUNNING
+\end{sh}
+
+\end{frame}
+% $
+
+
+\begin{frame}[fragile]
+  \frametitle{Changing the default output of squeue}
+
+  Environmental variable \texttt{SQUEUE\_FORMAT2} sets the columns that
+  are displayed in the table produced by command \texttt{squeue}:
+
+  \begin{semiverbatim}\tiny
+\$ export{\bfseries SQUEUE_FORMAT2="jobid:6,username:12,name,state,reason,timeused:12,timeleft:12"}
+\$ squeue
+JOBID USER        NAME                STATE       REASON              TIME        TIME_LEFT
+504   rmurri      sleep.sh            RUNNING     None                0:43        UNLIMITED
+\end{semiverbatim}
+
+  \+
+  Read \texttt{man squeue} to find out all the possible column names.
+
+  \+ If you don't like the default \texttt{squeue} columns, you can
+  (and should!) set a new value for \texttt{SQUEUE\_FORMAT2} in your
+  \texttt{.bashrc} file.
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{Changing the default output of \texttt{sacct}}
+
+  Environmental variable \texttt{SACCT\_FORMAT} sets the columns that
+  are displayed in the table produced by command \texttt{sacct}:
+
+  \begin{semiverbatim}\tiny
+\$ export{\bfseries SACCT_FORMAT="jobid,user,state,exitcode,start,elapsed"}
+\$ sacct
+       JobID      User      State ExitCode               Start    Elapsed
+-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}- -{}-{}-{}-{}-{}-{}-{}-{}- -{}-{}-{}-{}-{}-{}-{}-{}-{}- -{}-{}-{}-{}-{}-{}-{}- -{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}- -{}-{}-{}-{}-{}-{}-{}-{}-{}-
+502             rmurri  COMPLETED      0:0 2018-04-16T14:27:33   00:00:13
+502.batch               COMPLETED      0:0 2018-04-16T14:27:33   00:00:13
+\end{semiverbatim}
+
+  \+
+  Use \texttt{sacct -{}-helpformat} to list all possible column names.
+
+  \+ If you don't like the default \texttt{sacct} columns, you can
+  (and should!) set a new value for \texttt{SACCT\_FORMAT} in your
+  \texttt{.bashrc} file.
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{Interactive sessions}
+
+  Use command \texttt{srun -{}-pty} to run a job interactively.
+
+  \+
+  For instance, to start a shell on a compute node:
+\begin{semiverbatim}
+\${\bfseries srun --pty bash --login}
+\end{semiverbatim}
+
+  \+ \emph{Note:} The \texttt{srun} command will block until an
+  execution slot is available.
+\end{frame}
+
+
+\part{Dealing with multiple software versions}
+
+\begin{frame}
+  \frametitle{The Bad News}
+
+  \begin{quote}
+    There is no generic way of installing (and easily switching)
+    multiple versions of the same software or software stack.
+  \end{quote}
+
+  \+
+  The easy-to-use systems are language- or
+  software-specific (e.g., Python).
+
+  \+
+  The generic systems revolve around controlling environmental
+  variables (but have a lot of caveats and edge cases).
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Solution for Python: virtualenv}
+
+  Python has ``virtual environments'', which are just directories
+  containing a copy of Python and libraries.
+
+  \+
+  Once you \emph{``activate''} a virtualenv, every time you install
+  a Python library (\texttt{pip install}), it is installed in the
+  virtualenv.
+
+  \+
+  You can delete a virtualenv by simply removing its directory:
+\begin{semiverbatim}
+\$ rm -r my_python_virtualenv
+\end{semiverbatim}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Using Python's virtualenv}
+  \small
+
+  \begin{itemize}
+  \item \textbf{Create a virtualenv} (once only)
+
+\begin{semiverbatim}
+\$ python -m virtualenv /path/to/venv/
+\end{semiverbatim}
+
+    \emph{Note:}
+    \begin{itemize}
+    \item The virtualenv directory \emph{must not} exist!
+    \item Any filesystem path is fine, but choose one on a shared
+      filesystem (e.g. your home directory) if you want to use it in
+      jobs across the cluster.
+    \end{itemize}
+
+  \item \textbf{Enter (``activate'') a virtualenv} (in every new shell)
+
+\begin{semiverbatim}
+\$ source /path/to/venv/bin/activate
+\end{semiverbatim}
+
+  \item \textbf{Exit a virtualenv}
+
+\begin{semiverbatim}
+\$ deactivate
+\end{semiverbatim}
+
+  \end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{Using virtualenvs in SLURM jobs}
+
+  Commands in a job script are no different from the commands you type at the shell prompt, so just activate the virtualenv.
+  \begin{sh}
+# `.` is an alias for `source` that works always
+venv="$HOME/path/to/virtualenv"
+. "$venv/bin/activate"
+
+# `exec` must be the very last statement
+exec python my_script.py
+  \end{sh}
+\end{frame}
+% $
+
+
+\begin{frame}
+  \frametitle{The generic solution: \em environment~modules}
+
+  The \texttt{module} command is the standard solution on HPC clusters
+  for managing multiple versions of the same software.
+
+  \+ In essence, just manipulates the shell environment, adding or
+  removing variables, or changing the value of the existing ones
+  (e.g., add prepend directories to \texttt{PATH}).  All the changes
+  are listed in a single (Lua-syntax) file, and are performed (or
+  undone) at the same time.
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{Listing available modules}
+  \small
+
+  You can list available module files with the command \texttt{module
+    avail} (can be abbreviated to \texttt{ml av}):
+
+\begin{semiverbatim}\tiny\ttfamily
+$ \textbf{ml av}
+
+-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{} /opt/modulefiles -{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}
+   MATLAB/R2013b    MATLAB/R2017b (D)
+
+-{}-{}-{}-{}-{}-{}-{}-{} /opt/spack/share/spack/modules/linux-{}ubuntu16.04-{}x86_64 -{}-{}-{}-{}-{}-{}-{}-{}
+   intel-parallel-studio-professional.2018.0-gcc-5.4.0-qx4ndcf
+
+-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{} /opt/easybuild/modules/all -{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}
+   EasyBuild/3.5.2    EasyBuild/3.5.3 (D)
+
+-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}- /opt/lmod/lmod/modulefiles/Core -{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-
+   lmod/7.0    settarg/7.0
+
+  Where:
+   D:  Default Module
+   {\em [\ldots]}
+\end{semiverbatim}
+
+  \+
+  Note that each module name consists of a ``software name'' and a ``version'',
+  separated by a slash ``\texttt{/}''.
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{Loading modules}
+  \small
+
+  The command \texttt{module load} (short: \texttt{ml}) performs all
+  the changes to the environment described in a module file, and
+  ``activates'' a specific version of software:
+
+\begin{semiverbatim}\scriptsize
+  ${\bfseries ml MATLAB/R2013b}
+
+  $ matlab -nodisplay -nodesktop -r version
+ {\em [\ldots]}
+ans =
+
+8.2.0.701 (R2013b)
+\end{semiverbatim}
+
+  \+ Loading another version of the same module unloads the first one
+  automatically:
+\begin{semiverbatim}\scriptsize
+  ${\bfseries ml MATLAB/R2017b}
+
+The following have been reloaded with a version change:
+  1) MATLAB/R2013b => MATLAB/R2017b
+
+\end{semiverbatim}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Example: MATLAB module file}
+  \small
+
+  Command \texttt{module show} displays the contents of a module file:
+\begin{semiverbatim}\tiny\ttfamily
+\${\bfseries ml show MATLAB/R2013b}
+-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}
+   /opt/modulefiles/MATLAB/R2013b.lua:
+-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}
+help([[
+  This module loads MATLAB path and environment variables.
+]])
+prepend_path("PATH","/opt/MATLAB/R2013b/bin")
+\end{semiverbatim}
+
+  \+ Here, \texttt{MATLAB/R2013b} is the module for software
+  \texttt{MATLAB}, version \texttt{R2013b}, stored in file
+  \texttt{MATLAB/R2013b.lua}.
+
+  \+
+  Complete list of functions that can be used in a Lua module file:
+  \url{http://lmod.readthedocs.io/en/latest/050_lua_modulefiles.html}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Where to put my own module files?}
+
+  The command \texttt{module use} adds a directory to the search path
+  for module files.
+
+  \+ The usual choice is to store one's own module files into
+  \texttt{\$HOME/modulefiles}.
+
+  \+ You can add the \texttt{module use} command to your
+  \texttt{.bashrc} file to automatically add a module directory each
+  time you start a new shell.
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{How to use \texttt{module} in shell scripts}
+
+  The \texttt{module} command is loaded by file
+  \texttt{/etc/profile.d/modules.sh} which you need to \emph{source}:
+
+\begin{sh}
+  #! /bin/bash
+
+  # load the `module` command
+  . "/etc/profile.d/modules.sh"
+
+  # load an older version of MATLAB
+  module load MATLAB/R2013b
+
+  # run it
+  exec matlab -nodesktop -nodisplay -r version
+\end{sh}
+\end{frame}
+
+
+\part{Job arrays}
+
+\begin{frame}[fragile]
+  \frametitle{Job arrays}
+
+  A \emph{job array} is a $1D$ collection of jobs; each job is
+  distinguished by its \emph{index} in the array (an integer number).
+
+  \+ Job arrays display as a single row in \texttt{squeue} output, but
+  effectively many jobs will be run.
+
+  \+
+  Job arrays are created using the \texttt{-{}-array} option to \texttt{sbatch}:
+  \begin{sh}
+  # submit an array of 12 jobs
+  sbatch --array 0-11 array.sh
+
+  # submit 100 jobs, but only allow 10
+  # to run at the same time
+  sbatch --array '0-99%10' array.sh
+  \end{sh}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{Example: Job array script}
+  \small
+
+  A job array script is like any job script, but you should use the
+  \texttt{\$SLURM\_ARRAY\_TASK\_ID} environment variable to detect the
+  task to run.
+
+  \begin{sh}
+# note: `case ... in` uses *string* comparison!
+case "$SLURM_ARRAY_TASK_ID" in
+
+    "1")
+        param1=1.5
+        param2=3.4
+        exec matlab -r simul $param1 $param2
+        ;;
+
+    "2")
+      # \ldots
+
+esac
+  \end{sh}
+\end{frame}
+% $
+
+
+\part{The End}
+\begin{frame}[fragile]
+  \centering
+
+  \begin{center}
+    \begin{Huge}
+      Thank you!
+    \end{Huge}
+
+    \+
+    \begin{Large}
+      Any questions?
+    \end{Large}
+  \end{center}
+\end{frame}
+
+\begin{frame}[fragile]
+  \centering
+
+  \begin{center}
+    \begin{Large}
+      Thank you!
+    \end{Large}
+
+    \+
+    \begin{Huge}
+      Any questions?
+    \end{Huge}
+  \end{center}
+\end{frame}
+
+\end{document}
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
